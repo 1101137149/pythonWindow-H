@@ -50,6 +50,7 @@ class CustomFrame(tk.Frame):
         for item in self.list_data:
             self.tree.insert('',tk.END,values=item)
         
+        #treeview綁定
         def print_element(event):
             tree = event.widget
             selection = [tree.item(item)["text"] for item in tree.selection()]
@@ -148,12 +149,6 @@ class Window(tk.Tk):
         self.keyButton.grid(row=4,columnspan=4)
 
 
-        
-
-
-
-
-
 
 
     #------地圖搜尋框架--------
@@ -228,7 +223,7 @@ class Window(tk.Tk):
             return
 
         
-        print("視窗的值:",Road,Towncode01,Towncode02,TimeStart,TimeEnd)
+        # print("視窗的值:",Road,Towncode01,Towncode02,TimeStart,TimeEnd)
         keydata=[]
         for item in self.garbagestation_list:
             Roadcheck=False
