@@ -1,0 +1,5 @@
+venvH
+venvH/*
+__pycache__
+map_*
+offline_tiles_nyc.db
