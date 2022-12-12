@@ -50,6 +50,13 @@ class CustomFrame(tk.Frame):
         for item in self.list_data:
             self.tree.insert('',tk.END,values=item)
         
+        def print_element(event):
+            tree = event.widget
+            selection = [tree.item(item)["text"] for item in tree.selection()]
+            print("selected items:", selection)
+
+        self.tree.bind("<<TreeviewSelect>>", print_element)
+        
 
 #主視窗設定
 class Window(tk.Tk):
@@ -81,8 +88,9 @@ class Window(tk.Tk):
         self.KeywordFrame.pack(fill='both', expand=True)
         
         # 將frames放到notebook
-        notebook.add(self.KeywordFrame, text='以區域時段搜尋')
         notebook.add(MapFrame, text='以地圖搜尋')
+        notebook.add(self.KeywordFrame, text='以區域時段搜尋')
+        
         
         
 
@@ -201,21 +209,17 @@ class Window(tk.Tk):
         TimeEnd="" #抵達時間迄
 
         if self.Search.get() != '':
-            print("Road有值")
             Road=self.Search.get()
         if self.TaipeiAreaValue.get() !='全區':
-            print("Towncode01有值")
             Towncode01=self.TaipeiAreaValue.get()
         if self.AreaVillageValue.get() != '全部':
-            print("Towncode02有值")
             Towncode02=self.AreaVillageValue.get()
         if self.TimeStart.get() != '':
-            print("TimeStart有值")
             TimeStart=self.TimeStart.get()
         if self.TimeEnd.get() != '':
-            print("TimeEnd有值")
             TimeEnd=self.TimeEnd.get()
 
+        #抵達時間不可以只輸入一個
         if self.TimeStart.get() != '' and self.TimeEnd.get() == '':
             messagebox.showwarning("請輸入欄位","抵達時間(迄)請勿空白")
             return
@@ -230,8 +234,6 @@ class Window(tk.Tk):
             Roadcheck=False
             Towncode01check=False
             Towncode02check=False
-            Timecheck=False
-
 
             x=float(item["經度"])  # 25.05081974
             y=float(item["緯度"])  # 121.5438535
