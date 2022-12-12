@@ -20,7 +20,7 @@ class TKButton(tk.Button):
 
 #Treeview
 class CustomFrame(tk.Frame):
-    def __init__(self,parent,data=None,**kwargs):#這裡的self是定義
+    def __init__(self,parent,data=None,map_widget=None,**kwargs):#這裡的self是定義
         super().__init__(parent,**kwargs)
 
 
@@ -53,10 +53,19 @@ class CustomFrame(tk.Frame):
         #treeview綁定
         def print_element(event):
             tree = event.widget
-            selection = [tree.item(item)["text"] for item in tree.selection()]
-            print("selected items:", selection)
+            curItem = tree.focus()
+            address=tree.item(curItem)["values"][0] #地址
+            x=float(tree.item(curItem)["values"][4]) #經度
+            y=float(tree.item(curItem)["values"][5]) #緯度
 
-        self.tree.bind("<<TreeviewSelect>>", print_element)
+            # selection = [tree.item(item)["values"] for item in tree.selection()]
+            # print(type(selection))
+            # print("selected items:", selection)
+            #把地圖的定位定在點選的那列資料
+            map_widget.set_position(x,y) 
+            map_widget.set_zoom(18)
+            messagebox.showinfo("已完成",f"已將{address}定位到地圖！",parent=tree)
+        self.tree.bind("<Double-1>", print_element)
         
 
 #主視窗設定
@@ -70,7 +79,7 @@ class Window(tk.Tk):
 
 
         #建立Label pack是由上而下!
-        title=tk.Label(self,text="垃圾車資訊",bg= '#345678') #類似CSS padding的設定 上下左右各推30
+        title=tk.Label(self,text="台北市垃圾車停靠讚",bg= '#345678') #類似CSS padding的設定 上下左右各推30
         titlefont=tkFont.Font(family='微軟正黑體',size=18,weight='bold') #先設定字體格式
         title.config(font=titlefont,foreground="#FFFFFF")        
         title.pack(padx=10,pady=10)
@@ -101,7 +110,7 @@ class Window(tk.Tk):
         mainFrame.pack()
 
         #建立關鍵字的label
-        TKLable(mainFrame, text="以下可擇一搜尋",bd=3).grid(row=0,column=0,columnspan=4)
+        TKLable(mainFrame, text="以下可擇一搜尋，搜尋到的結果雙擊兩下可以到地圖區看到位置",bd=3).grid(row=0,column=0,columnspan=4)
 
         #建立Combo的Label
         TKLable(mainFrame, text="請選擇行政區",bd=3).grid(row=1,column=0)
@@ -128,7 +137,7 @@ class Window(tk.Tk):
 
         #建立關鍵字的label
         TKLable(mainFrame, text="街道名稱",bd=3).grid(row=2,column=0)
-        self.Search = tk.Entry(mainFrame, width=50)
+        self.Search = tk.Entry(mainFrame, width=55)
         self.Search.grid(row=2, column=1,columnspan=3)
         
         
@@ -138,14 +147,15 @@ class Window(tk.Tk):
 
         #建立抵達時間的Label
         TKLable(mainFrame, text="抵達時間(起)").grid(row=3,column=0)
-        self.TimeStart = tk.Entry(mainFrame, width=10)
+        self.TimeStart = tk.Entry(mainFrame, width=22)
         self.TimeStart.grid(row=3, column=1)
         TKLable(mainFrame, text="抵達時間(迄)").grid(row=3,column=2)
-        self.TimeEnd = tk.Entry(mainFrame, width=10)
+        self.TimeEnd = tk.Entry(mainFrame, width=23)
         self.TimeEnd.grid(row=3, column=3)
         
         #搜尋按鈕
-        self.keyButton=TKButton(mainFrame,text="搜尋",command=self.KeySearch)
+        self.keyButton=TKButton(mainFrame,text="搜尋", command=self.KeySearch)
+        self.keyButton.config(width=60)
         self.keyButton.grid(row=4,columnspan=4)
 
 
@@ -164,10 +174,10 @@ class Window(tk.Tk):
         self.search_bar.grid(row=0, column=0, pady=10, padx=10, sticky="we")
         self.search_bar.focus()
 
-        self.search_bar_button = tk.Button(master=searchFrame, width=8, text="Search", command=self.MapSearch)
+        self.search_bar_button = tk.Button(master=searchFrame, width=8, text="搜尋", command=self.MapSearch)
         self.search_bar_button.grid(row=0, column=1, pady=10, padx=10)
 
-        self.search_bar_clear = tk.Button(master=searchFrame, width=8, text="Clear", command=self.MapClear)
+        self.search_bar_clear = tk.Button(master=searchFrame, width=8, text="清除", command=self.MapClear)
         self.search_bar_clear.grid(row=0, column=2, pady=10, padx=10)
 
 
@@ -210,16 +220,16 @@ class Window(tk.Tk):
         if self.AreaVillageValue.get() != '全部':
             Towncode02=self.AreaVillageValue.get()
         if self.TimeStart.get() != '':
-            TimeStart=self.TimeStart.get()
+            TimeStart=self.TimeStart.get().replace(":","")
         if self.TimeEnd.get() != '':
-            TimeEnd=self.TimeEnd.get()
+            TimeEnd=self.TimeEnd.get().replace(":","")
 
         #抵達時間不可以只輸入一個
         if self.TimeStart.get() != '' and self.TimeEnd.get() == '':
-            messagebox.showwarning("請輸入欄位","抵達時間(迄)請勿空白")
+            messagebox.showwarning("請輸入欄位","抵達時間(迄)請勿空白",parent=self.keyButton)
             return
         elif self.TimeStart.get() == '' and self.TimeEnd.get() != '':
-            messagebox.showwarning("請輸入欄位","抵達時間(起)請勿空白")
+            messagebox.showwarning("請輸入欄位","抵達時間(起)請勿空白",parent=self.keyButton)
             return
 
         
@@ -238,11 +248,12 @@ class Window(tk.Tk):
             carNum=item["車號"] # 119-BQ
             timeS=item["抵達時間"] # 1700
             timeE=item["離開時間"] # 1709
-            # timeS=f'{item["抵達時間"][:2]}:{item["抵達時間"][2:]}' # 1700
-            # timeE=f'{item["離開時間"][:2]}:{item["離開時間"][2:]}' # 1709
+            
             
             #都沒輸入，印全部
             if Road=="" and Towncode01=="" and Towncode02=="" and TimeStart=="" and TimeEnd=="":
+                timeS=f'{item["抵達時間"][:2]}:{item["抵達時間"][2:]}' # 1700
+                timeE=f'{item["離開時間"][:2]}:{item["離開時間"][2:]}' # 1709
                 keydata.append([address,carNum,timeS,timeE,x,y])
             else: #根據搜尋條件來印對應資料
                 Towncode01check=TaipeiArea.__contains__(Towncode01)
@@ -253,19 +264,27 @@ class Window(tk.Tk):
                     #時間區間
                     if TimeStart!="":
                         if int(float(timeS))>=int(float(TimeStart)) and int(float(timeS))<=int(float(TimeEnd)):
+                            timeS=f'{item["抵達時間"][:2]}:{item["抵達時間"][2:]}' # 1700
+                            timeE=f'{item["離開時間"][:2]}:{item["離開時間"][2:]}' # 1709
                             keydata.append([address,carNum,timeS,timeE,x,y])
                     else:
+                        timeS=f'{item["抵達時間"][:2]}:{item["抵達時間"][2:]}' # 1700
+                        timeE=f'{item["離開時間"][:2]}:{item["離開時間"][2:]}' # 1709
                         keydata.append([address,carNum,timeS,timeE,x,y])
+                        
 
        #LabelFrame
         if hasattr(self,"displayFrame") :
             self.displayFrame.destroy()
-            
-        self.displayFrame = ttk.LabelFrame(self.KeywordFrame,text=f"查詢結果({len(keydata)}筆)",borderwidth=2,relief=tk.GROOVE)
-        self.displayFrame.pack(fill=tk.BOTH,padx=100,pady=(0,30))
+        self.displayFrame = ttk.LabelFrame(self.KeywordFrame,text=f"\n查詢結果({len(keydata)}筆)",borderwidth=2,relief=tk.GROOVE)
+        self.displayFrame.pack(fill=tk.BOTH,padx=80,pady=(0,30))
+        if(len(keydata)!=0):  
+            # print(keydata)
+            dataFrame=CustomFrame(self.displayFrame,data=keydata,map_widget=self.map_widget)
+            dataFrame.pack(side=tk.LEFT)
+        else:
+            TKLable(self.displayFrame, text="oops...沒有垃圾車資訊唷").pack(padx=10,pady=10)
 
-        dataFrame=CustomFrame(self.displayFrame,data=keydata)
-        dataFrame.pack(side=tk.LEFT)
 
 
     #地圖地址搜尋按鈕
@@ -301,7 +320,6 @@ class Window(tk.Tk):
             else: #有一筆api資料錯誤會導致程式不能跑 所以排除
                 print("----")
                 print(x,y,item["地點"])
-                # self.map_widget.set_marker(y,x, text=item["抵達時間"], icon=self.truck_image) #設定新座標
     
     
     #目前套件未支援點擊座標位置可以顯示對應的內容
@@ -317,43 +335,12 @@ class Window(tk.Tk):
     
 
 
-
-
-
-
-
-        # # Combobox creation
-        # n = tk.StringVar()
-        # monthchoosen = ttk.Combobox(window, width = 27, textvariable = n)
-
-        # # Adding combobox drop down list
-        # monthchoosen['values'] = (' January',
-        # 					' February',
-        # 					' March',
-        # 					' April',
-        # 					' May',
-        # 					' June',
-        # 					' July',
-        # 					' August',
-        # 					' September',
-        # 					' October',
-        # 					' November',
-        # 					' December')
-
-        # monthchoosen.place(x=400,y=200)
-        # monthchoosen.current()
-
-
-
-
-
-
-
-
-
+#主程式
 def main():
     window=Window()
-    window.title("垃圾車停靠讚")
+    window.title("台北市垃圾車停靠讚")
+    # window.iconphoto(False, tk.PhotoImage(file='./images/icon.png'))
+    window.iconbitmap('icon.icns')
     window.resizable(0,0) #禁止拖拉視窗調整視窗大小
     window.geometry("800x500")
     window.mainloop()
