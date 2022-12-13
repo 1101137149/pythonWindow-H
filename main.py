@@ -340,7 +340,7 @@ def main():
     window=Window()
     window.title("台北市垃圾車停靠讚")
     # window.iconphoto(False, tk.PhotoImage(file='./images/icon.png'))
-    window.iconbitmap('icon.icns')
+    # window.iconbitmap('icon.icns')
     window.resizable(0,0) #禁止拖拉視窗調整視窗大小
     window.geometry("800x500")
     window.mainloop()
