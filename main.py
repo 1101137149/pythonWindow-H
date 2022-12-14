@@ -5,6 +5,8 @@ import tkinter.font as tkFont
 import datasource as ds
 import tkintermapview #地圖
 import os
+from imgdata import icon_img #把圖片打包不然轉exe會出錯
+import base64
 
 #標籤
 class TKLable(tk.Label):
@@ -190,9 +192,17 @@ class Window(tk.Tk):
         self.map_widget.set_zoom(15) #縮放程度
 
 
+        
+        # 建立 images
+        imgdata = base64.b64decode(icon_img)
+        filename ='truck.png' # I assume you have a way of picking unique filenames
+        with open(filename, 'wb') as f:
+            f.write(imgdata)
+
         # load images
         current_path = os.path.join(os.path.dirname(os.path.abspath(__file__))) #設定路徑
-        self.truck_image = ImageTk.PhotoImage(Image.open(os.path.join(current_path, "images", "truck.png")).resize((40, 40))) #將圖改成垃圾車
+        self.truck_image=ImageTk.PhotoImage(Image.open(filename).resize((40,40)))
+        # self.truck_image = ImageTk.PhotoImage(Image.open(os.path.join(current_path, "images", "truck.png")).resize((40, 40))) #將圖改成垃圾車
         # marker_2 = self.map_widget.set_marker(25.1150128,121.5361573, text="測試19:00", icon=self.truck_image) #設定新座標
         
         self.set_truckPoint()

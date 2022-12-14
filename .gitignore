@@ -3,3 +3,7 @@ venvH/*
 __pycache__
 map_*
 offline_tiles_nyc.db
+build
+dist
+main.spec
+truck.png
